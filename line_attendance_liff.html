@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LINE勤怠管理</title>
+    <!-- LIFF SDK -->
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #06C755, #00B900);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .line-badge {
+            background: #06C755;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .user-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid #06C755;
+        }
+
+        .user-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .employee-setup {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .employee-setup h3 {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+            width: 100%;
+        }
+
+        .btn-line {
+            background: #06C755;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4caf50, #43a047);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107, #ff9800);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f44336, #e91e63);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .qr-scanner {
+            text-align: center;
+            padding: 30px 20px;
+            background: #f5f5f5;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .qr-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .action-btn {
+            padding: 30px 20px;
+            text-align: center;
+            background: white;
+            border: 3px solid #e0e0e0;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .action-btn:hover {
+            border-color: #06C755;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(6, 199, 85, 0.3);
+        }
+
+        .action-btn.active {
+            border-color: #06C755;
+            background: #e8fbed;
+        }
+
+        .action-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .action-label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .status-display {
+            background: #e8f4fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .status-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .status-value {
+            color: #333;
+            font-weight: bold;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: bold;
+            text-align: center;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 2px solid #bee5eb;
+        }
+
+        .records-table {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            background: #f5f5f5;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .badge-in {
+            background: #4caf50;
+        }
+
+        .badge-out {
+            background: #ff5722;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #06C755;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .clock {
+            text-align: center;
+            font-size: 20px;
+            color: #06C755;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .tutorial {
+            background: #f0f8ff;
+            border: 2px solid #4a90e2;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .tutorial h3 {
+            color: #4a90e2;
+            margin-bottom: 15px;
+        }
+
+        .tutorial ol {
+            margin-left: 20px;
+            color: #555;
+        }
+
+        .tutorial li {
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 400px) {
+            .action-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- ローディング画面 -->
+        <div id="loadingScreen" class="card">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>LINE認証中...</p>
+            </div>
+        </div>
+
+        <!-- ログイン画面 -->
+        <div id="loginScreen" class="card" style="display: none;">
+            <div class="header">
+                <h1>
+                    🐱 勤怠管理
+                    <span class="line-badge">LINE</span>
+                </h1>
+            </div>
+            <div class="tutorial">
+                <h3>📱 LINEアプリから利用してください</h3>
+                <ol>
+                    <li>LINEアプリを開く</li>
+                    <li>トークルームからこのリンクをタップ</li>
+                    <li>自動的にログインされます</li>
+                </ol>
+            </div>
+            <button class="btn btn-line" onclick="liffLogin()">
+                LINEでログイン
+            </button>
+        </div>
+
+        <!-- メイン画面 -->
+        <div id="mainScreen" style="display: none;">
+            <div class="card">
+                <div class="header">
+                    <h1>🐱 勤怠管理システム</h1>
+                    <div class="clock" id="clock"></div>
+                </div>
+
+                <!-- ユーザー情報 -->
+                <div class="user-info">
+                    <div class="user-profile">
+                        <img id="userAvatar" class="user-avatar" src="">
+                        <div>
+                            <div class="user-name" id="userName"></div>
+                            <div style="color: #666; font-size: 14px;">
+                                従業員コード: <span id="employeeCode" style="font-weight: bold;"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 従業員コード設定 -->
+                <div id="employeeSetup" class="employee-setup" style="display: none;">
+                    <h3>⚠️ 従業員コードを設定してください</h3>
+                    <div class="input-group">
+                        <input type="text" id="employeeCodeInput" placeholder="例: EMP001">
+                        <button class="btn btn-warning" style="width: auto;" onclick="saveEmployeeCode()">
+                            設定
+                        </button>
+                    </div>
+                    <p style="color: #856404; font-size: 14px;">
+                        ※管理者から割り当てられた従業員コードを入力してください
+                    </p>
+                </div>
+
+                <!-- QRスキャナー -->
+                <div id="qrSection" style="display: none;">
+                    <div class="qr-scanner">
+                        <div class="qr-icon">📷</div>
+                        <h3 style="margin-bottom: 10px;">QRコードをスキャン</h3>
+                        <p style="color: #666; margin-bottom: 20px;">
+                            出勤/退勤用のQRコードを読み取ってください
+                        </p>
+                        <button class="btn btn-line" onclick="scanQR()">
+                            QRコードを読み取る
+                        </button>
+                    </div>
+
+                    <!-- 打刻タイプ選択 -->
+                    <h3 style="margin-bottom: 15px; text-align: center;">または手動で打刻</h3>
+                    <div class="action-grid">
+                        <div class="action-btn" onclick="selectAction('in')">
+                            <div class="action-icon">🏢</div>
+                            <div class="action-label">出勤</div>
+                        </div>
+                        <div class="action-btn" onclick="selectAction('out')">
+                            <div class="action-icon">🏠</div>
+                            <div class="action-label">退勤</div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-success" id="punchBtn" onclick="punch()" disabled>
+                        打刻する
+                    </button>
+                </div>
+
+                <!-- ステータス表示 -->
+                <div class="status-display">
+                    <div class="status-row">
+                        <span class="status-label">本日の状態:</span>
+                        <span class="status-value" id="todayStatus">未出勤</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">最終打刻:</span>
+                        <span class="status-value" id="lastPunch">-</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">勤務時間:</span>
+                        <span class="status-value" id="workHours">0時間0分</span>
+                    </div>
+                </div>
+
+                <!-- メッセージ表示 -->
+                <div id="message" style="display: none;"></div>
+
+                <!-- ログアウトボタン -->
+                <button class="btn btn-danger" style="margin-top: 20px;" onclick="liffLogout()">
+                    ログアウト
+                </button>
+            </div>
+
+            <!-- 本日の記録 -->
+            <div class="card">
+                <h2 style="margin-bottom: 20px;">📋 本日の打刻記録</h2>
+                <div class="records-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>時刻</th>
+                                <th>種別</th>
+                                <th>方法</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recordsTable">
+                            <tr>
+                                <td colspan="3" style="text-align: center; color: #999;">
+                                    本日の記録はありません
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // LIFF ID（実際の開発時は環境変数から取得）
+        const LIFF_ID = 'YOUR-LIFF-ID-HERE';
+        
+        // グローバル変数
+        let liffProfile = null;
+        let employeeCode = null;
+        let selectedAction = null;
+        let records = [];
+
+        // 初期化
+        window.onload = function() {
+            initializeLiff();
+            updateClock();
+            setInterval(updateClock, 1000);
+        };
+
+        // LIFF初期化
+        async function initializeLiff() {
+            try {
+                await liff.init({ liffId: LIFF_ID });
+                
+                if (liff.isLoggedIn()) {
+                    // ログイン済み
+                    const profile = await liff.getProfile();
+                    liffProfile = profile;
+                    
+                    // 従業員コード取得
+                    employeeCode = localStorage.getItem(`emp_${profile.userId}`);
+                    
+                    showMainScreen();
+                } else {
+                    // 未ログイン
+                    showLoginScreen();
+                }
+            } catch (error) {
+                console.error('LIFF初期化エラー:', error);
+                showLoginScreen();
+            }
+        }
+
+        // ログイン画面表示
+        function showLoginScreen() {
+            document.getElementById('loadingScreen').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'block';
+            document.getElementById('mainScreen').style.display = 'none';
+        }
+
+        // メイン画面表示
+        function showMainScreen() {
+            document.getElementById('loadingScreen').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainScreen').style.display = 'block';
+            
+            // ユーザー情報表示
+            if (liffProfile) {
+                document.getElementById('userAvatar').src = liffProfile.pictureUrl || 'https://via.placeholder.com/60';
+                document.getElementById('userName').textContent = liffProfile.displayName;
+            }
+            
+            // 従業員コード確認
+            if (employeeCode) {
+                document.getElementById('employeeCode').textContent = employeeCode;
+                document.getElementById('employeeSetup').style.display = 'none';
+                document.getElementById('qrSection').style.display = 'block';
+            } else {
+                document.getElementById('employeeCode').textContent = '未設定';
+                document.getElementById('employeeSetup').style.display = 'block';
+                document.getElementById('qrSection').style.display = 'none';
+            }
+            
+            // 記録読み込み
+            loadRecords();
+            updateStatus();
+        }
+
+        // LINEログイン
+        function liffLogin() {
+            liff.login();
+        }
+
+        // LINEログアウト
+        function liffLogout() {
+            if (confirm('ログアウトしますか？')) {
+                liff.logout();
+                window.location.reload();
+            }
+        }
+
+        // 従業員コード保存
+        function saveEmployeeCode() {
+            const code = document.getElementById('employeeCodeInput').value.trim();
+            
+            if (!code) {
+                showMessage('従業員コードを入力してください', 'error');
+                return;
+            }
+            
+            if (!liffProfile) {
+                showMessage('LINEログインが必要です', 'error');
+                return;
+            }
+            
+            // 保存
+            employeeCode = code;
+            localStorage.setItem(`emp_${liffProfile.userId}`, code);
+            
+            // 画面更新
+            document.getElementById('employeeCode').textContent = code;
+            document.getElementById('employeeSetup').style.display = 'none';
+            document.getElementById('qrSection').style.display = 'block';
+            
+            showMessage('従業員コードを設定しました', 'success');
+            
+            // LINE Notifyに送信（オプション）
+            sendLineNotify(`従業員コード設定: ${liffProfile.displayName} (${code})`);
+        }
+
+        // QRコードスキャン
+        async function scanQR() {
+            try {
+                if (!liff.scanCodeV2) {
+                    showMessage('QRスキャン機能が利用できません', 'error');
+                    return;
+                }
+                
+                const result = await liff.scanCodeV2();
+                
+                // QRコードの内容を解析
+                const qrData = result.value;
+                
+                // QRコードに打刻タイプが含まれている場合
+                if (qrData.includes('type=in')) {
+                    selectAction('in');
+                    punch();
+                } else if (qrData.includes('type=out')) {
+                    selectAction('out');
+                    punch();
+                } else {
+                    showMessage('打刻タイプを選択してから打刻してください', 'info');
+                }
+                
+            } catch (error) {
+                console.error('QRスキャンエラー:', error);
+                showMessage('QRコードの読み取りに失敗しました', 'error');
+            }
+        }
+
+        // アクション選択
+        function selectAction(type) {
+            selectedAction = type;
+            
+            // UI更新
+            document.querySelectorAll('.action-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            if (type === 'in') {
+                document.querySelectorAll('.action-btn')[0].classList.add('active');
+                document.getElementById('punchBtn').textContent = '出勤を記録';
+            } else {
+                document.querySelectorAll('.action-btn')[1].classList.add('active');
+                document.getElementById('punchBtn').textContent = '退勤を記録';
+            }
+            
+            document.getElementById('punchBtn').disabled = false;
+        }
+
+        // 打刻
+        async function punch() {
+            if (!selectedAction) {
+                showMessage('打刻タイプを選択してください', 'error');
+                return;
+            }
+            
+            if (!employeeCode) {
+                showMessage('従業員コードを設定してください', 'error');
+                return;
+            }
+            
+            // 記録作成
+            const record = {
+                id: Date.now(),
+                employeeCode: employeeCode,
+                employeeName: liffProfile.displayName,
+                lineUserId: liffProfile.userId,
+                type: selectedAction,
+                timestamp: new Date().toISOString(),
+                date: new Date().toISOString().split('T')[0],
+                time: new Date().toLocaleTimeString('ja-JP'),
+                method: 'LINE'
+            };
+            
+            // 保存
+            records.push(record);
+            saveRecords();
+            
+            // UI更新
+            showMessage(
+                `${selectedAction === 'in' ? '出勤' : '退勤'}を記録しました`,
+                'success'
+            );
+            
+            updateRecordsTable();
+            updateStatus();
+            
+            // LINE通知送信
+            const message = `【打刻】${liffProfile.displayName}(${employeeCode}) - ${selectedAction === 'in' ? '出勤' : '退勤'} ${record.time}`;
+            sendLineNotify(message);
+            
+            // リセット
+            selectedAction = null;
+            document.querySelectorAll('.action-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById('punchBtn').disabled = true;
+            document.getElementById('punchBtn').textContent = '打刻する';
+        }
+
+        // 記録読み込み
+        function loadRecords() {
+            const saved = localStorage.getItem('attendance_records');
+            if (saved) {
+                records = JSON.parse(saved);
+            }
+        }
+
+        // 記録保存
+        function saveRecords() {
+            localStorage.setItem('attendance_records', JSON.stringify(records));
+        }
+
+        // 記録テーブル更新
+        function updateRecordsTable() {
+            const today = new Date().toISOString().split('T')[0];
+            const todayRecords = records.filter(r => 
+                r.date === today && r.employeeCode === employeeCode
+            );
+            
+            const tbody = document.getElementById('recordsTable');
+            
+            if (todayRecords.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: #999;">
+                            本日の記録はありません
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = todayRecords
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                .map(record => `
+                    <tr>
+                        <td>${record.time}</td>
+                        <td>
+                            <span class="badge badge-${record.type}">
+                                ${record.type === 'in' ? '出勤' : '退勤'}
+                            </span>
+                        </td>
+                        <td>${record.method}</td>
+                    </tr>
+                `).join('');
+        }
+
+        // ステータス更新
+        function updateStatus() {
+            const today = new Date().toISOString().split('T')[0];
+            const todayRecords = records.filter(r => 
+                r.date === today && r.employeeCode === employeeCode
+            );
+            
+            if (todayRecords.length === 0) {
+                document.getElementById('todayStatus').textContent = '未出勤';
+                document.getElementById('lastPunch').textContent = '-';
+                document.getElementById('workHours').textContent = '0時間0分';
+                return;
+            }
+            
+            // 最新の記録
+            const lastRecord = todayRecords[todayRecords.length - 1];
+            document.getElementById('lastPunch').textContent = 
+                `${lastRecord.time} (${lastRecord.type === 'in' ? '出勤' : '退勤'})`;
+            
+            // 状態
+            if (lastRecord.type === 'in') {
+                document.getElementById('todayStatus').textContent = '勤務中';
+            } else {
+                document.getElementById('todayStatus').textContent = '退勤済み';
+            }
+            
+            // 勤務時間計算
+            let totalMinutes = 0;
+            let clockInTime = null;
+            
+            todayRecords.forEach(record => {
+                if (record.type === 'in') {
+                    clockInTime = new Date(record.timestamp);
+                } else if (record.type === 'out' && clockInTime) {
+                    const clockOutTime = new Date(record.timestamp);
+                    totalMinutes += (clockOutTime - clockInTime) / (1000 * 60);
+                    clockInTime = null;
+                }
+            });
+            
+            // 現在勤務中の場合
+            if (clockInTime) {
+                const now = new Date();
+                totalMinutes += (now - clockInTime) / (1000 * 60);
+            }
+            
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = Math.floor(totalMinutes % 60);
+            document.getElementById('workHours').textContent = `${hours}時間${minutes}分`;
+        }
+
+        // LINE Notify送信（サーバー経由で実装する必要あり）
+        function sendLineNotify(message) {
+            // 実際の実装では、サーバーAPIを経由してLINE Notifyに送信
+            console.log('LINE Notify:', message);
+            
+            // 例: サーバーAPIに送信
+            // fetch('/api/line-notify', {
+            //     method: 'POST',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify({ message })
+            // });
+        }
+
+        // メッセージ表示
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // 時計更新
+        function updateClock() {
+            const now = new Date();
+            const clockDiv = document.getElementById('clock');
+            if (clockDiv) {
+                clockDiv.textContent = now.toLocaleString('ja-JP', {
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    weekday: 'short'
+                });
+            }
+        }
+    </script>
+</body>
+</html>
