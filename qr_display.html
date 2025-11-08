@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打刻用QRコード</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+        }
+
+        .qr-display-card {
+            background: white;
+            border-radius: 30px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .company-header {
+            margin-bottom: 40px;
+        }
+
+        .company-name {
+            font-size: 36px;
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .current-time {
+            font-size: 28px;
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .current-date {
+            font-size: 20px;
+            color: #999;
+        }
+
+        .qr-type-selector {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .type-button {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f0f2f5;
+            color: #666;
+        }
+
+        .type-button.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .type-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .qr-container {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 40px;
+            display: inline-block;
+        }
+
+        #qrcode {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            display: inline-block;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .qr-info {
+            margin-top: 30px;
+        }
+
+        .qr-type-label {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .type-in {
+            color: #4caf50;
+        }
+
+        .type-out {
+            color: #ff5722;
+        }
+
+        .type-break-start {
+            color: #2196f3;
+        }
+
+        .type-break-end {
+            color: #ff9800;
+        }
+
+        .qr-timer {
+            font-size: 20px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .countdown-display {
+            display: inline-block;
+            padding: 10px 20px;
+            background: white;
+            border-radius: 30px;
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .countdown-high {
+            color: #4caf50;
+        }
+
+        .countdown-medium {
+            color: #ff9800;
+        }
+
+        .countdown-low {
+            color: #dc3545;
+        }
+
+        .instructions {
+            background: #e8f4fd;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .instructions h3 {
+            color: #2196f3;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .instructions ol {
+            text-align: left;
+            display: inline-block;
+            font-size: 16px;
+            color: #555;
+        }
+
+        .instructions li {
+            margin-bottom: 10px;
+        }
+
+        .auto-refresh-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4caf50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 5px 20px rgba(76, 175, 80, 0.3);
+        }
+
+        .pulse {
+            width: 10px;
+            height: 10px;
+            background: white;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(1.5);
+            }
+        }
+
+        .settings-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            font-size: 24px;
+            transition: all 0.3s;
+        }
+
+        .settings-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .settings-panel {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            display: none;
+            min-width: 250px;
+        }
+
+        .settings-panel.show {
+            display: block;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .setting-item label {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 25px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 25px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 3.5px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #667eea;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(25px);
+        }
+
+        .refresh-interval-setting {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .refresh-interval-setting label {
+            display: block;
+            margin-bottom: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .refresh-interval-setting select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        /* モバイル対応 */
+        @media (max-width: 768px) {
+            .qr-display-card {
+                padding: 30px 20px;
+            }
+
+            .company-name {
+                font-size: 28px;
+            }
+
+            .current-time {
+                font-size: 24px;
+            }
+
+            .qr-type-selector {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .type-button {
+                padding: 12px 20px;
+                font-size: 16px;
+            }
+
+            #qrcode {
+                padding: 20px;
+            }
+
+            .qr-type-label {
+                font-size: 24px;
+            }
+        }
+
+        /* 全画面表示用 */
+        @media (min-width: 1400px) {
+            .container {
+                max-width: 1000px;
+            }
+
+            .qr-display-card {
+                padding: 60px;
+            }
+
+            .company-name {
+                font-size: 48px;
+            }
+
+            .current-time {
+                font-size: 36px;
+            }
+
+            #qrcode {
+                padding: 40px;
+                transform: scale(1.2);
+                transform-origin: center;
+            }
+
+            .qr-type-label {
+                font-size: 40px;
+            }
+        }
+
+        /* ダークモード対応（オプション） */
+        @media (prefers-color-scheme: dark) {
+            body.dark-mode {
+                background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
+            }
+
+            body.dark-mode .qr-display-card {
+                background: #2d2d2d;
+            }
+
+            body.dark-mode .company-name,
+            body.dark-mode .qr-type-label {
+                color: #f0f0f0;
+            }
+
+            body.dark-mode .qr-container {
+                background: #3d3d3d;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 自動更新インジケーター -->
+    <div class="auto-refresh-indicator">
+        <div class="pulse"></div>
+        自動更新中
+    </div>
+
+    <!-- メインコンテナ -->
+    <div class="container">
+        <div class="qr-display-card">
+            <!-- 会社ヘッダー -->
+            <div class="company-header">
+                <div class="company-name">🐱 勤怠管理システム</div>
+                <div class="current-time" id="currentTime"></div>
+                <div class="current-date" id="currentDate"></div>
+            </div>
+
+            <!-- 打刻タイプ選択 -->
+            <div class="qr-type-selector">
+                <button class="type-button active" onclick="selectType('in')">出勤</button>
+                <button class="type-button" onclick="selectType('out')">退勤</button>
+                <button class="type-button" onclick="selectType('break-start')">休憩開始</button>
+                <button class="type-button" onclick="selectType('break-end')">休憩終了</button>
+            </div>
+
+            <!-- QRコード表示エリア -->
+            <div class="qr-container">
+                <div id="qrcode"></div>
+                <div class="qr-info">
+                    <div class="qr-type-label type-in" id="qrTypeLabel">出勤用QRコード</div>
+                    <div class="qr-timer">有効期限: <span id="expiryTime"></span></div>
+                    <div class="countdown-display countdown-high" id="countdown">60秒</div>
+                </div>
+            </div>
+
+            <!-- 使い方説明 -->
+            <div class="instructions">
+                <h3>📱 打刻方法</h3>
+                <ol>
+                    <li>LINEアプリを開く</li>
+                    <li>勤怠管理システムを起動</li>
+                    <li>「QRコードを読み取る」をタップ</li>
+                    <li>このQRコードをスキャン</li>
+                    <li>自動的に打刻完了！</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- 設定ボタン -->
+    <div class="settings-toggle" onclick="toggleSettings()">⚙️</div>
+
+    <!-- 設定パネル -->
+    <div class="settings-panel" id="settingsPanel">
+        <div class="setting-item">
+            <label>自動更新</label>
+            <label class="toggle-switch">
+                <input type="checkbox" id="autoRefresh" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="setting-item">
+            <label>音声通知</label>
+            <label class="toggle-switch">
+                <input type="checkbox" id="soundEnabled">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="refresh-interval-setting">
+            <label>更新間隔</label>
+            <select id="refreshInterval">
+                <option value="30">30秒</option>
+                <option value="60" selected>60秒</option>
+                <option value="90">90秒</option>
+                <option value="120">120秒</option>
+            </select>
+        </div>
+    </div>
+
+    <script>
+        // グローバル変数
+        let currentType = 'in';
+        let qrData = null;
+        let countdownInterval = null;
+        let autoRefreshInterval = null;
+        let refreshIntervalSeconds = 60;
+
+        // 初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+            generateQR(currentType);
+            setupAutoRefresh();
+            
+            // 設定変更イベント
+            document.getElementById('autoRefresh').addEventListener('change', setupAutoRefresh);
+            document.getElementById('refreshInterval').addEventListener('change', function(e) {
+                refreshIntervalSeconds = parseInt(e.target.value);
+                setupAutoRefresh();
+            });
+        });
+
+        // 日時更新
+        function updateDateTime() {
+            const now = new Date();
+            
+            // 時刻
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString('ja-JP', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            
+            // 日付
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('ja-JP', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                weekday: 'long'
+            });
+        }
+
+        // タイプ選択
+        function selectType(type) {
+            currentType = type;
+            
+            // ボタンの選択状態更新
+            document.querySelectorAll('.type-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // QRコード生成
+            generateQR(type);
+        }
+
+        // QRコード生成
+        function generateQR(type) {
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = '';
+            
+            // QRコードデータ
+            qrData = {
+                action: 'attendance',
+                type: type,
+                timestamp: new Date().toISOString(),
+                token: generateToken(),
+                expiresIn: refreshIntervalSeconds,
+                companyId: 'COMPANY001'
+            };
+            
+            // QRコード生成（大きめサイズ）
+            new QRCode(qrContainer, {
+                text: JSON.stringify(qrData),
+                width: 320,
+                height: 320,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            
+            // ラベル更新
+            updateTypeLabel(type);
+            
+            // 有効期限表示
+            const expiry = new Date();
+            expiry.setSeconds(expiry.getSeconds() + refreshIntervalSeconds);
+            document.getElementById('expiryTime').textContent = expiry.toLocaleTimeString('ja-JP');
+            
+            // カウントダウン開始
+            startCountdown(refreshIntervalSeconds);
+            
+            // 音声通知（オプション）
+            if (document.getElementById('soundEnabled').checked) {
+                playNotificationSound();
+            }
+        }
+
+        // トークン生成
+        function generateToken() {
+            return 'QR_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // タイプラベル更新
+        function updateTypeLabel(type) {
+            const label = document.getElementById('qrTypeLabel');
+            const labels = {
+                'in': '出勤用QRコード',
+                'out': '退勤用QRコード',
+                'break-start': '休憩開始用QRコード',
+                'break-end': '休憩終了用QRコード'
+            };
+            
+            label.textContent = labels[type];
+            
+            // 色クラス更新
+            label.className = 'qr-type-label';
+            label.classList.add('type-' + type);
+        }
+
+        // カウントダウン
+        function startCountdown(seconds) {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            
+            let remaining = seconds;
+            const countdownElement = document.getElementById('countdown');
+            
+            countdownInterval = setInterval(() => {
+                remaining--;
+                
+                if (remaining <= 0) {
+                    clearInterval(countdownInterval);
+                    countdownElement.textContent = '更新中...';
+                    
+                    // 自動更新が有効なら新しいQRコード生成
+                    if (document.getElementById('autoRefresh').checked) {
+                        setTimeout(() => {
+                            generateQR(currentType);
+                        }, 100);
+                    }
+                } else {
+                    countdownElement.textContent = remaining + '秒';
+                    
+                    // カウントダウンの色更新
+                    countdownElement.className = 'countdown-display';
+                    if (remaining <= 10) {
+                        countdownElement.classList.add('countdown-low');
+                    } else if (remaining <= 30) {
+                        countdownElement.classList.add('countdown-medium');
+                    } else {
+                        countdownElement.classList.add('countdown-high');
+                    }
+                }
+            }, 1000);
+        }
+
+        // 自動更新設定
+        function setupAutoRefresh() {
+            // 既存のインターバルをクリア
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+            
+            // 自動更新が有効な場合
+            if (document.getElementById('autoRefresh').checked) {
+                const interval = refreshIntervalSeconds * 1000;
+                autoRefreshInterval = setInterval(() => {
+                    generateQR(currentType);
+                }, interval);
+                
+                // インジケーター表示
+                document.querySelector('.auto-refresh-indicator').style.display = 'flex';
+            } else {
+                // インジケーター非表示
+                document.querySelector('.auto-refresh-indicator').style.display = 'none';
+            }
+        }
+
+        // 設定パネル切り替え
+        function toggleSettings() {
+            const panel = document.getElementById('settingsPanel');
+            panel.classList.toggle('show');
+        }
+
+        // 音声通知（シンプルなビープ音）
+        function playNotificationSound() {
+            // Web Audio APIを使用した簡単なビープ音
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                gainNode.gain.value = 0.1;
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.1);
+            } catch (e) {
+                console.log('音声通知エラー:', e);
+            }
+        }
+
+        // ページ離脱時の処理
+        window.addEventListener('beforeunload', function() {
+            if (countdownInterval) clearInterval(countdownInterval);
+            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+        });
+
+        // フルスクリーン切り替え（F11キー）
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F11') {
+                e.preventDefault();
+                toggleFullScreen();
+            }
+        });
+
+        // フルスクリーン切り替え
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+    </script>
+</body>
+</html>
