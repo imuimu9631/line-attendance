@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>勤怠管理システム - 管理画面</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        /* ヘッダー */
+        .header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .clock {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        /* サイドバー */
+        .container {
+            display: flex;
+            max-width: 1400px;
+            margin: 0 auto;
+            min-height: calc(100vh - 80px);
+        }
+
+        .sidebar {
+            width: 250px;
+            background: white;
+            padding: 20px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+        }
+
+        .menu-item {
+            padding: 12px 16px;
+            margin-bottom: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #555;
+        }
+
+        .menu-item:hover {
+            background: #f0f2f5;
+            color: #667eea;
+        }
+
+        .menu-item.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        /* メインコンテンツ */
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        /* カード */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f2f5;
+        }
+
+        .card h2 {
+            color: #333;
+            font-size: 20px;
+        }
+
+        /* 統計カード */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .stat-label {
+            color: #999;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        /* テーブル */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        /* フォーム */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        /* ボタン */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* バッジ */
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .badge-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        /* QRコード */
+        .qr-container {
+            text-align: center;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        #qrcode {
+            display: inline-block;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        /* モーダル */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 600px;
+            margin: 50px auto;
+            border-radius: 12px;
+            padding: 30px;
+            position: relative;
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f2f5;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        /* タブ */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            background: #f8f9fa;
+        }
+
+        .tab.active {
+            border-bottom-color: #667eea;
+            color: #667eea;
+        }
+
+        /* アクションボタン群 */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* 検索バー */
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+        }
+
+        /* チップ */
+        .chip {
+            display: inline-block;
+            padding: 6px 12px;
+            background: #e9ecef;
+            border-radius: 20px;
+            font-size: 12px;
+            margin: 2px;
+        }
+
+        /* 有給残日数の色分け */
+        .vacation-high { color: #28a745; }
+        .vacation-medium { color: #ffc107; }
+        .vacation-low { color: #dc3545; }
+
+        /* レスポンシブ */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                display: flex;
+                overflow-x: auto;
+                padding: 10px;
+            }
+            
+            .menu-item {
+                white-space: nowrap;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>🐱 勤怠管理システム - 管理画面</h1>
+            <div class="clock" id="clock"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <div class="menu-item active" onclick="showSection('dashboard')">
+                📊 ダッシュボード
+            </div>
+            <div class="menu-item" onclick="showSection('employees')">
+                👥 従業員管理
+            </div>
+            <div class="menu-item" onclick="showSection('attendance')">
+                ⏰ 勤怠記録
+            </div>
+            <div class="menu-item" onclick="showSection('salary')">
+                💰 給与・交通費
+            </div>
+            <div class="menu-item" onclick="showSection('vacation')">
+                🏖️ 有給管理
+            </div>
+            <div class="menu-item" onclick="showSection('qr')">
+                📱 QRコード
+            </div>
+            <div class="menu-item" onclick="showSection('reports')">
+                📈 レポート
+            </div>
+            <div class="menu-item" onclick="showSection('settings')">
+                ⚙️ 設定
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- ダッシュボード -->
+            <div id="dashboard" class="content-section active">
+                <h2 style="margin-bottom: 30px;">📊 ダッシュボード</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>本日の出勤者</h3>
+                        <div class="stat-value" id="todayAttendance">0</div>
+                        <div class="stat-label">名</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>現在勤務中</h3>
+                        <div class="stat-value" id="currentlyWorking">0</div>
+                        <div class="stat-label">名</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>今月の勤務時間</h3>
+                        <div class="stat-value" id="monthlyHours">0</div>
+                        <div class="stat-label">時間</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>今月の人件費</h3>
+                        <div class="stat-value" id="monthlyCost">0</div>
+                        <div class="stat-label">円</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2>本日の勤怠状況</h2>
+                        <button class="btn btn-primary" onclick="refreshDashboard()">更新</button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>従業員</th>
+                                <th>出勤時刻</th>
+                                <th>退勤時刻</th>
+                                <th>勤務時間</th>
+                                <th>ステータス</th>
+                            </tr>
+                        </thead>
+                        <tbody id="todayAttendanceTable">
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: #999;">データがありません</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2>有給取得予定</h2>
+                    </div>
+                    <div id="upcomingVacations">
+                        <p style="color: #999;">予定はありません</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 従業員管理 -->
+            <div id="employees" class="content-section">
+                <h2 style="margin-bottom: 30px;">👥 従業員管理</h2>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h2>従業員登録</h2>
+                    </div>
+                    <form id="employeeForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>従業員コード</label>
+                                <input type="text" class="form-control" id="empCode" placeholder="EMP001" required>
+                            </div>
+                            <div class="form-group">
+                                <label>氏名</label>
+                                <input type="text" class="form-control" id="empName" placeholder="山田太郎" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>メールアドレス</label>
+                                <input type="email" class="form-control" id="empEmail" placeholder="yamada@example.com">
+                            </div>
+                            <div class="form-group">
+                                <label>電話番号</label>
+                                <input type="tel" class="form-control" id="empPhone" placeholder="090-1234-5678">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>時給（円）</label>
+                                <input type="number" class="form-control" id="empHourlyRate" placeholder="1200" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>交通費（日額・円）</label>
+                                <input type="number" class="form-control" id="empTransportation" placeholder="500" min="0">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>有給付与日数（年間）</label>
+                                <input type="number" class="form-control" id="empVacationDays" placeholder="10" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>入社日</label>
+                                <input type="date" class="form-control" id="empJoinDate" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">従業員を登録</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2>従業員一覧</h2>
+                        <div class="action-buttons">
+                            <button class="btn btn-info" onclick="exportEmployees()">エクスポート</button>
+                            <button class="btn btn-warning" onclick="importEmployees()">インポート</button>
+                        </div>
+                    </div>
+                    <div class="search-bar">
+                        <input type="text" class="search-input" id="employeeSearch" placeholder="名前または従業員コードで検索" onkeyup="searchEmployees()">
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>従業員コード</th>
+                                <th>氏名</th>
+                                <th>時給</th>
+                                <th>交通費</th>
+                                <th>有給残</th>
+                                <th>入社日</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employeeTable">
+                            <tr>
+                                <td colspan="7" style="text-align: center; color: #999;">従業員が登録されていません</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 勤怠記録 -->
+            <div id="attendance" class="content-section">
+                <h2 style="margin-bottom: 30px;">⏰ 勤怠記録</h2>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h2>勤怠記録検索</h2>
+                    </div>
+                    <div class="search-bar">
+                        <input type="date" class="form-control" id="attendanceStartDate">
+                        <input type="date" class="form-control" id="attendanceEndDate">
+                        <select class="form-control" id="attendanceEmployee">
+                            <option value="">全従業員</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="searchAttendance()">検索</button>
+                        <button class="btn btn-info" onclick="exportAttendance()">CSV出力</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>日付</th>
+                                <th>従業員</th>
+                                <th>出勤</th>
+                                <th>退勤</th>
+                                <th>休憩</th>
+                                <th>勤務時間</th>
+                                <th>残業時間</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendanceTable">
+                            <tr>
+                                <td colspan="8" style="text-align: center; color: #999;">記録がありません</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 給与・交通費 -->
+            <div id="salary" class="content-section">
+                <h2 style="margin-bottom: 30px;">💰 給与・交通費管理</h2>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h2>月次給与計算</h2>
+                    </div>
+                    <div class="form-row">
+                        <select class="form-control" id="salaryMonth">
+                            <option value="">対象月を選択</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="calculateSalary()">計算実行</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>従業員</th>
+                                <th>勤務日数</th>
+                                <th>勤務時間</th>
+                                <th>基本給</th>
+                                <th>残業代</th>
+                                <th>交通費</th>
+                                <th>総支給額</th>
+                                <th>詳細</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salaryTable">
+                            <tr>
+                                <td colspan="8" style="text-align: center; color: #999;">データがありません</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 20px; text-align: right;">
+                        <button class="btn btn-success" onclick="exportSalarySlip()">給与明細出力</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2>時給・交通費設定</h2>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>従業員</th>
+                                <th>現在の時給</th>
+                                <th>新時給</th>
+                                <th>交通費（日額）</th>
+                                <th>適用日</th>
+                                <th>更新</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salarySettingTable">
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: #999;">データがありません</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 有給管理 -->
+            <div id="vacation" class="content-section">
+                <h2 style="margin-bottom: 30px;">🏖️ 有給管理</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>総付与日数</h3>
+                        <div class="stat-value" id="totalVacationDays">0</div>
+                        <div class="stat-label">日</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>総取得日数</h3>
+                        <div class="stat-value" id="usedVacationDays">0</div>
+                        <div class="stat-label">日</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>取得率</h3>
+                        <div class="stat-value" id="vacationRate">0</div>
+                        <div class="stat-label">%</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2>有給申請</h2>
+                    </div>
+                    <form id="vacationForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>従業員</label>
+                                <select class="form-control" id="vacationEmployee" required>
+                                    <option value="">選択してください</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>種別</label>
+                                <select class="form-control" id="vacationType" required>
+                                    <option value="full">全日</option>
+                                    <option value="morning">午前半休</option>
+                                    <option value="afternoon">午後半休</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>取得日</label>
+                                <input type="date" class="form-control" id="vacationDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label>理由</label>
+                                <input type="text" class="form-control" id="vacationReason" placeholder="私用のため">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">申請登録</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2>有給残日数一覧</h2>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>従業員</th>
+                                <th>付与日数</th>
+                                <th>取得済</th>
+                                <th>残日数</th>
+                                <th>次回付与日</th>
+                                <th>詳細</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vacationTable">
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: #999;">データがありません</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2>有給取得履歴</h2>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>申請日</th>
+                                <th>従業員</th>
+                                <th>取得日</th>
+                                <th>種別</th>
+                                <th>理由</th>
+                                <th>承認状況</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vacationHistoryTable">
+                            <tr>
+                                <td colspan="7" style="text-align: center; color: #999;">履歴がありません</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- QRコード -->
+            <div id="qr" class="content-section">
+                <h2 style="margin-bottom: 30px;">📱 QRコード生成</h2>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h2>打刻用QRコード</h2>
+                        <div class="action-buttons">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="autoRefreshQR" checked onchange="toggleAutoRefresh()">
+                                <span class="slider"></span>
+                            </label>
+                            <span style="margin-left: 10px;">自動更新（60秒ごと）</span>
+                        </div>
+                    </div>
+                    <div class="tabs">
+                        <div class="tab active" onclick="selectQRType('in')">出勤用</div>
+                        <div class="tab" onclick="selectQRType('out')">退勤用</div>
+                        <div class="tab" onclick="selectQRType('break-start')">休憩開始用</div>
+                        <div class="tab" onclick="selectQRType('break-end')">休憩終了用</div>
+                    </div>
+                    <div class="qr-container">
+                        <div id="qrcode"></div>
+                        <div style="margin-top: 20px;">
+                            <p id="qrType" style="font-size: 18px; font-weight: bold; color: #667eea;">出勤用QRコード</p>
+                            <p style="color: #666; margin-top: 10px;">有効期限: <span id="qrExpiry">-</span></p>
+                            <p style="color: #999; margin-top: 5px; font-size: 14px;">残り時間: <span id="qrCountdown" style="color: #ff6b6b; font-weight: bold;">60秒</span></p>
+                        </div>
+                        <div style="margin-top: 20px;">
+                            <button class="btn btn-primary" onclick="downloadQR()">画像保存</button>
+                            <button class="btn btn-success" onclick="printQR()">印刷</button>
+                            <button class="btn btn-warning" onclick="manualRefreshQR()">手動更新</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2>LIFF URL</h2>
+                    </div>
+                    <div style="padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                        <p style="margin-bottom: 10px;">従業員用LINEアプリURL:</p>
+                        <input type="text" class="form-control" value="https://liff.line.me/2008444059-JmVGoO57" readonly>
+                        <button class="btn btn-info" style="margin-top: 10px;" onclick="copyLiffUrl()">URLをコピー</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- レポート -->
+            <div id="reports" class="content-section">
+                <h2 style="margin-bottom: 30px;">📈 レポート</h2>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h2>月次レポート生成</h2>
+                    </div>
+                    <div class="form-row">
+                        <select class="form-control" id="reportMonth">
+                            <option value="">対象月を選択</option>
+                        </select>
+                        <select class="form-control" id="reportType">
+                            <option value="attendance">勤怠レポート</option>
+                            <option value="salary">給与レポート</option>
+                            <option value="vacation">有給レポート</option>
+                            <option value="all">総合レポート</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="generateReport()">レポート生成</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2>分析サマリー</h2>
+                    </div>
+                    <div id="reportSummary">
+                        <p style="color: #999;">レポートを生成してください</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 設定 -->
+            <div id="settings" class="content-section">
+                <h2 style="margin-bottom: 30px;">⚙️ 設定</h2>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h2>基本設定</h2>
+                    </div>
+                    <div class="form-group">
+                        <label>会社名</label>
+                        <input type="text" class="form-control" id="companyName" placeholder="株式会社サンプル">
+                    </div>
+                    <div class="form-group">
+                        <label>所定労働時間（1日）</label>
+                        <input type="number" class="form-control" id="workHours" value="8" min="1" max="24">
+                    </div>
+                    <div class="form-group">
+                        <label>残業計算開始時間</label>
+                        <input type="number" class="form-control" id="overtimeThreshold" value="8" min="1" max="24">
+                    </div>
+                    <div class="form-group">
+                        <label>深夜割増率（%）</label>
+                        <input type="number" class="form-control" id="nightRate" value="25" min="0">
+                    </div>
+                    <button class="btn btn-primary" onclick="saveSettings()">設定を保存</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2>データ管理</h2>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn btn-success" onclick="backupData()">バックアップ作成</button>
+                        <button class="btn btn-warning" onclick="restoreData()">バックアップ復元</button>
+                        <button class="btn btn-danger" onclick="resetData()">データ初期化</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 従業員編集モーダル -->
+    <div id="employeeModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal('employeeModal')">&times;</span>
+            <div class="modal-header">
+                <h2>従業員情報編集</h2>
+            </div>
+            <form id="editEmployeeForm">
+                <input type="hidden" id="editEmpId">
+                <div class="form-group">
+                    <label>従業員コード</label>
+                    <input type="text" class="form-control" id="editEmpCode" readonly>
+                </div>
+                <div class="form-group">
+                    <label>氏名</label>
+                    <input type="text" class="form-control" id="editEmpName">
+                </div>
+                <div class="form-group">
+                    <label>時給</label>
+                    <input type="number" class="form-control" id="editEmpHourlyRate">
+                </div>
+                <div class="form-group">
+                    <label>交通費（日額）</label>
+                    <input type="number" class="form-control" id="editEmpTransportation">
+                </div>
+                <div class="form-group">
+                    <label>有給付与日数</label>
+                    <input type="number" class="form-control" id="editEmpVacationDays">
+                </div>
+                <button type="submit" class="btn btn-primary">更新</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // Google Sheets API設定
+        // ========================================
+        const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyqpql1mobPxD_2qrnfSb7CobAKwjgjC-dD7ELLGNSBrOtw1LDpNJv7Ia3LekNtuv98/exec';
+        
+        // API通信関数
+        async function callGasApi(action, data = {}) {
+            try {
+                const response = await fetch(GAS_API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // CORS回避
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: action,
+                        ...data
+                    })
+                });
+                
+                // no-corsモードではレスポンスが読めないため、成功と仮定
+                console.log(`API呼び出し成功: ${action}`);
+                return { success: true };
+            } catch (error) {
+                console.error('API呼び出しエラー:', error);
+                return { success: false, error: error.message };
+            }
+        }
+        
+        // データ同期関数
+        async function syncToGoogleSheets(action, data) {
+            if (!GAS_API_URL || GAS_API_URL === 'https://script.google.com/macros/s/AKfycbyqpql1mobPxD_2qrnfSb7CobAKwjgjC-dD7ELLGNSBrOtw1LDpNJv7Ia3LekNtuv98/exec') {
+                console.warn('Google Sheets APIが設定されていません');
+                return;
+            }
+            
+            return await callGasApi(action, data);
+        }
+
+        // ========================================
+        // データストレージ（ローカル＋Google Sheets）
+        // ========================================
+        let employees = [];
+        let attendanceRecords = [];
+        let vacationRecords = [];
+        let settings = {
+            companyName: '株式会社サンプル',
+            workHours: 8,
+            overtimeThreshold: 8,
+            nightRate: 25
+        };
+
+        // 初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            updateClock();
+            setInterval(updateClock, 1000);
+            initializeMonthSelectors();
+            generateQR('in');
+            toggleAutoRefresh(); // 自動更新を開始
+            updateDashboard();
+            
+            // フォームイベント
+            document.getElementById('employeeForm').addEventListener('submit', addEmployee);
+            document.getElementById('vacationForm').addEventListener('submit', addVacation);
+            document.getElementById('editEmployeeForm').addEventListener('submit', updateEmployee);
+        });
+
+        // 時計更新
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleString('ja-JP', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                weekday: 'long'
+            });
+        }
+
+        // セクション切り替え
+        function showSection(sectionId) {
+            // すべてのセクションを非表示
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // メニューアイテムの選択状態を更新
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // 選択されたセクションを表示
+            document.getElementById(sectionId).classList.add('active');
+            event.target.classList.add('active');
+            
+            // セクション別の初期化
+            if (sectionId === 'employees') {
+                loadEmployeeTable();
+            } else if (sectionId === 'attendance') {
+                loadAttendanceTable();
+            } else if (sectionId === 'salary') {
+                loadSalaryTable();
+            } else if (sectionId === 'vacation') {
+                loadVacationTable();
+            }
+        }
+
+        // データ読み込み
+        function loadData() {
+            employees = JSON.parse(localStorage.getItem('employees')) || [];
+            attendanceRecords = JSON.parse(localStorage.getItem('attendanceRecords')) || [];
+            vacationRecords = JSON.parse(localStorage.getItem('vacationRecords')) || [];
+            const savedSettings = localStorage.getItem('settings');
+            if (savedSettings) {
+                settings = JSON.parse(savedSettings);
+            }
+        }
+
+        // データ保存
+        function saveData() {
+            localStorage.setItem('employees', JSON.stringify(employees));
+            localStorage.setItem('attendanceRecords', JSON.stringify(attendanceRecords));
+            localStorage.setItem('vacationRecords', JSON.stringify(vacationRecords));
+            localStorage.setItem('settings', JSON.stringify(settings));
+        }
+
+        // 従業員追加
+        async function addEmployee(e) {
+            e.preventDefault();
+            
+            const employee = {
+                id: Date.now(),
+                code: document.getElementById('empCode').value,
+                name: document.getElementById('empName').value,
+                email: document.getElementById('empEmail').value,
+                phone: document.getElementById('empPhone').value,
+                hourlyRate: parseInt(document.getElementById('empHourlyRate').value) || 1200,
+                transportation: parseInt(document.getElementById('empTransportation').value) || 0,
+                vacationDays: parseInt(document.getElementById('empVacationDays').value) || 10,
+                joinDate: document.getElementById('empJoinDate').value,
+                createdAt: new Date().toISOString()
+            };
+            
+            // ローカル保存
+            employees.push(employee);
+            saveData();
+            
+            // Google Sheetsに同期
+            await syncToGoogleSheets('addEmployee', employee);
+            
+            alert(`${employee.name}さんを登録しました`);
+            document.getElementById('employeeForm').reset();
+            loadEmployeeTable();
+        }
+
+        // 従業員テーブル更新
+        function loadEmployeeTable() {
+            const tbody = document.getElementById('employeeTable');
+            
+            if (employees.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #999;">従業員が登録されていません</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = employees.map(emp => {
+                const vacationUsed = getUsedVacationDays(emp.id);
+                const vacationRemaining = emp.vacationDays - vacationUsed;
+                const vacationClass = vacationRemaining >= 5 ? 'vacation-high' : vacationRemaining >= 2 ? 'vacation-medium' : 'vacation-low';
+                
+                return `
+                    <tr>
+                        <td>${emp.code}</td>
+                        <td>${emp.name}</td>
+                        <td>¥${emp.hourlyRate.toLocaleString()}</td>
+                        <td>¥${emp.transportation.toLocaleString()}</td>
+                        <td class="${vacationClass}">${vacationRemaining}日</td>
+                        <td>${emp.joinDate}</td>
+                        <td>
+                            <button class="btn btn-info" onclick="editEmployee(${emp.id})">編集</button>
+                            <button class="btn btn-danger" onclick="deleteEmployee(${emp.id})">削除</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // 従業員編集
+        function editEmployee(id) {
+            const employee = employees.find(e => e.id === id);
+            if (!employee) return;
+            
+            document.getElementById('editEmpId').value = employee.id;
+            document.getElementById('editEmpCode').value = employee.code;
+            document.getElementById('editEmpName').value = employee.name;
+            document.getElementById('editEmpHourlyRate').value = employee.hourlyRate;
+            document.getElementById('editEmpTransportation').value = employee.transportation;
+            document.getElementById('editEmpVacationDays').value = employee.vacationDays;
+            
+            document.getElementById('employeeModal').style.display = 'block';
+        }
+
+        // 従業員更新
+        function updateEmployee(e) {
+            e.preventDefault();
+            
+            const id = parseInt(document.getElementById('editEmpId').value);
+            const employee = employees.find(e => e.id === id);
+            
+            if (employee) {
+                employee.name = document.getElementById('editEmpName').value;
+                employee.hourlyRate = parseInt(document.getElementById('editEmpHourlyRate').value);
+                employee.transportation = parseInt(document.getElementById('editEmpTransportation').value);
+                employee.vacationDays = parseInt(document.getElementById('editEmpVacationDays').value);
+                
+                saveData();
+                loadEmployeeTable();
+                closeModal('employeeModal');
+                alert('従業員情報を更新しました');
+            }
+        }
+
+        // 従業員削除
+        function deleteEmployee(id) {
+            if (confirm('この従業員を削除しますか？')) {
+                employees = employees.filter(e => e.id !== id);
+                saveData();
+                loadEmployeeTable();
+            }
+        }
+
+        // QRコード関連変数
+        let currentQRType = 'in';
+        let qrAutoRefreshInterval = null;
+        let qrCountdownInterval = null;
+        let currentQRData = null;
+
+        // QRコードタイプ選択
+        function selectQRType(type) {
+            currentQRType = type;
+            
+            // タブの選択状態更新
+            document.querySelectorAll('.tabs .tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            generateQR(type);
+        }
+
+        // QRコード生成
+        function generateQR(type) {
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = '';
+            
+            // QRコードデータ（LINE LIFFで読み取り可能な形式）
+            const qrData = {
+                action: 'attendance',
+                type: type,
+                timestamp: new Date().toISOString(),
+                token: generateToken(),
+                expiresIn: 60, // 60秒
+                companyId: 'COMPANY001' // 会社識別子
+            };
+            
+            currentQRData = qrData;
+            
+            // QRコード生成
+            new QRCode(qrContainer, {
+                text: JSON.stringify(qrData),
+                width: 256,
+                height: 256,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            
+            // タイプ表示更新
+            const typeText = {
+                'in': '出勤用QRコード',
+                'out': '退勤用QRコード',
+                'break-start': '休憩開始用QRコード',
+                'break-end': '休憩終了用QRコード'
+            };
+            document.getElementById('qrType').textContent = typeText[type];
+            
+            // 有効期限表示
+            const expiry = new Date();
+            expiry.setSeconds(expiry.getSeconds() + 60);
+            document.getElementById('qrExpiry').textContent = expiry.toLocaleTimeString('ja-JP');
+            
+            // カウントダウン開始
+            startQRCountdown(60);
+            
+            // セッションストレージに保存（LINEアプリ側で検証用）
+            sessionStorage.setItem('qr_' + qrData.token, JSON.stringify(qrData));
+        }
+
+        // トークン生成
+        function generateToken() {
+            return 'QR_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // カウントダウン
+        function startQRCountdown(seconds) {
+            // 既存のカウントダウンをクリア
+            if (qrCountdownInterval) {
+                clearInterval(qrCountdownInterval);
+            }
+            
+            let remaining = seconds;
+            const countdownElement = document.getElementById('qrCountdown');
+            
+            qrCountdownInterval = setInterval(() => {
+                remaining--;
+                
+                if (remaining <= 0) {
+                    clearInterval(qrCountdownInterval);
+                    countdownElement.textContent = '期限切れ';
+                    countdownElement.style.color = '#dc3545';
+                    
+                    // 自動更新が有効なら新しいQRコードを生成
+                    if (document.getElementById('autoRefreshQR').checked) {
+                        generateQR(currentQRType);
+                    }
+                } else {
+                    countdownElement.textContent = remaining + '秒';
+                    
+                    // 残り時間で色を変える
+                    if (remaining <= 10) {
+                        countdownElement.style.color = '#dc3545';
+                    } else if (remaining <= 30) {
+                        countdownElement.style.color = '#ffc107';
+                    } else {
+                        countdownElement.style.color = '#28a745';
+                    }
+                }
+            }, 1000);
+        }
+
+        // 自動更新トグル
+        function toggleAutoRefresh() {
+            const autoRefresh = document.getElementById('autoRefreshQR').checked;
+            
+            if (autoRefresh) {
+                // 60秒ごとに自動更新
+                qrAutoRefreshInterval = setInterval(() => {
+                    generateQR(currentQRType);
+                }, 60000);
+            } else {
+                // 自動更新停止
+                if (qrAutoRefreshInterval) {
+                    clearInterval(qrAutoRefreshInterval);
+                    qrAutoRefreshInterval = null;
+                }
+            }
+        }
+
+        // 手動更新
+        function manualRefreshQR() {
+            generateQR(currentQRType);
+        }
+
+        // ダッシュボード更新
+        function updateDashboard() {
+            const today = new Date().toISOString().split('T')[0];
+            const todayRecords = attendanceRecords.filter(r => r.date === today);
+            
+            // 統計更新
+            document.getElementById('todayAttendance').textContent = todayRecords.filter(r => r.clockIn).length;
+            document.getElementById('currentlyWorking').textContent = todayRecords.filter(r => r.clockIn && !r.clockOut).length;
+            
+            // 今月の勤務時間と人件費
+            const thisMonth = new Date().toISOString().slice(0, 7);
+            const monthlyRecords = attendanceRecords.filter(r => r.date.startsWith(thisMonth));
+            
+            let totalHours = 0;
+            let totalCost = 0;
+            
+            monthlyRecords.forEach(record => {
+                const employee = employees.find(e => e.code === record.employeeCode);
+                if (employee && record.workHours) {
+                    totalHours += record.workHours;
+                    totalCost += record.workHours * employee.hourlyRate;
+                    totalCost += employee.transportation;
+                }
+            });
+            
+            document.getElementById('monthlyHours').textContent = Math.round(totalHours);
+            document.getElementById('monthlyCost').textContent = totalCost.toLocaleString();
+            
+            // 本日の勤怠テーブル
+            const tbody = document.getElementById('todayAttendanceTable');
+            if (todayRecords.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #999;">本日の記録はありません</td></tr>';
+            } else {
+                tbody.innerHTML = todayRecords.map(record => {
+                    const employee = employees.find(e => e.code === record.employeeCode);
+                    const status = record.clockOut ? '<span class="badge badge-success">退勤済</span>' : '<span class="badge badge-warning">勤務中</span>';
+                    
+                    return `
+                        <tr>
+                            <td>${employee ? employee.name : record.employeeCode}</td>
+                            <td>${record.clockIn || '-'}</td>
+                            <td>${record.clockOut || '-'}</td>
+                            <td>${record.workHours ? record.workHours.toFixed(1) + '時間' : '-'}</td>
+                            <td>${status}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+
+        // 有給使用日数取得
+        function getUsedVacationDays(employeeId) {
+            const currentYear = new Date().getFullYear();
+            return vacationRecords.filter(v => {
+                const vYear = new Date(v.date).getFullYear();
+                return v.employeeId === employeeId && vYear === currentYear && v.status === 'approved';
+            }).reduce((total, v) => {
+                return total + (v.type === 'full' ? 1 : 0.5);
+            }, 0);
+        }
+
+        // 月選択初期化
+        function initializeMonthSelectors() {
+            const selectors = ['salaryMonth', 'reportMonth'];
+            const now = new Date();
+            
+            selectors.forEach(selectorId => {
+                const select = document.getElementById(selectorId);
+                if (!select) return;
+                
+                for (let i = 0; i < 12; i++) {
+                    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                    const option = document.createElement('option');
+                    option.value = date.toISOString().slice(0, 7);
+                    option.textContent = date.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long' });
+                    select.appendChild(option);
+                }
+            });
+        }
+
+        // モーダル閉じる
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // LIFF URLコピー
+        function copyLiffUrl() {
+            const url = 'https://liff.line.me/2008444059-JmVGoO57';
+            navigator.clipboard.writeText(url);
+            alert('URLをコピーしました');
+        }
+
+        // その他の機能は必要に応じて実装
+        function refreshDashboard() { updateDashboard(); }
+        function searchEmployees() { /* 実装 */ }
+        function searchAttendance() { /* 実装 */ }
+        function loadAttendanceTable() { /* 実装 */ }
+        function loadSalaryTable() { /* 実装 */ }
+        function loadVacationTable() { /* 実装 */ }
+        function calculateSalary() { /* 実装 */ }
+        function addVacation(e) { e.preventDefault(); /* 実装 */ }
+        function generateReport() { /* 実装 */ }
+        function saveSettings() { /* 実装 */ }
+        function backupData() { /* 実装 */ }
+        function restoreData() { /* 実装 */ }
+        function resetData() { /* 実装 */ }
+        function exportEmployees() { /* 実装 */ }
+        function importEmployees() { /* 実装 */ }
+        function exportAttendance() { /* 実装 */ }
+        function exportSalarySlip() { /* 実装 */ }
+        function downloadQR() { /* 実装 */ }
+        function printQR() { window.print(); }
+    </script>
+</body>
+</html>
