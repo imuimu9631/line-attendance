@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>勤怠管理 - LINE打刻</title>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .clock {
+            font-size: 32px;
+            color: #667eea;
+            font-weight: bold;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .date {
+            font-size: 18px;
+            color: #666;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .user-info {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .user-name {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .user-code {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .action-btn {
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .action-btn.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .action-btn .icon {
+            font-size: 32px;
+            margin-bottom: 5px;
+        }
+
+        .action-btn .label {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4caf50, #45a049);
+            color: white;
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #2196f3, #1976d2);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .login-container {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .login-container .logo {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .setup-form {
+            margin-top: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+            font-weight: bold;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .debug-info {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 12px;
+            font-family: monospace;
+        }
+
+        .debug-info h3 {
+            color: #495057;
+            margin-bottom: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th {
+            background: #f5f5f5;
+            padding: 10px;
+            text-align: left;
+            font-weight: bold;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- デバッグ情報 -->
+        <div id="debugInfo" class="card debug-info" style="display: none;">
+            <h3>🔧 デバッグ情報</h3>
+            <div id="debugContent">
+                <p>LIFF状態: <span id="liffStatus">未確認</span></p>
+                <p>ログイン状態: <span id="loginStatus">未確認</span></p>
+                <p>エラー: <span id="errorInfo">なし</span></p>
+                <p>URL: <span id="currentUrl">-</span></p>
+            </div>
+        </div>
+
+        <!-- ローディング画面 -->
+        <div id="loadingScreen" class="card loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 20px; color: #666;">LIFF初期化中...</p>
+        </div>
+
+        <!-- エラー画面 -->
+        <div id="errorScreen" class="card" style="display: none;">
+            <div class="header">
+                <div class="logo">⚠️</div>
+                <h1>エラーが発生しました</h1>
+            </div>
+            <div id="errorMessage" class="message error"></div>
+            <button class="btn btn-primary" onclick="location.reload()">
+                再読み込み
+            </button>
+            <button class="btn btn-info" onclick="showDebugInfo()">
+                デバッグ情報を表示
+            </button>
+        </div>
+
+        <!-- ログイン画面 -->
+        <div id="loginScreen" class="card login-container" style="display: none;">
+            <div class="logo">🐱</div>
+            <h1>勤怠管理システム</h1>
+            <p style="color: #666; margin: 20px 0;">LINEアカウントでログインしてください</p>
+            <button class="btn btn-primary" onclick="liffLogin()">
+                LINEでログイン
+            </button>
+            <button class="btn btn-info" onclick="showDebugInfo()" style="margin-top: 10px;">
+                デバッグ情報
+            </button>
+        </div>
+
+        <!-- 初期設定画面 -->
+        <div id="setupScreen" class="card" style="display: none;">
+            <div class="header">
+                <h1>初期設定</h1>
+                <p style="color: #666;">従業員コードを設定してください</p>
+            </div>
+            <div id="setupUserInfo" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <p>名前: <span id="setupUserName">-</span></p>
+                <p style="font-size: 12px; color: #666;">LINE ID: <span id="setupUserId">-</span></p>
+            </div>
+            <form id="setupForm" class="setup-form">
+                <div class="form-group">
+                    <label>従業員コード</label>
+                    <input type="text" 
+                           id="setupEmployeeCode" 
+                           class="form-control" 
+                           placeholder="例: EMP001"
+                           required>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    設定を保存
+                </button>
+            </form>
+        </div>
+
+        <!-- メイン画面 -->
+        <div id="mainScreen" style="display: none;">
+            <!-- ヘッダー情報 -->
+            <div class="card">
+                <div class="header">
+                    <div class="logo">🐱</div>
+                    <h1>勤怠管理システム</h1>
+                </div>
+
+                <div class="clock" id="clock">00:00:00</div>
+                <div class="date" id="date">2024年1月1日 月曜日</div>
+
+                <div class="user-info">
+                    <div class="user-name" id="userName">読み込み中...</div>
+                    <div class="user-code" id="userCode">-</div>
+                </div>
+            </div>
+
+            <!-- 打刻エリア -->
+            <div class="card">
+                <h2 style="margin-bottom: 20px; text-align: center;">打刻</h2>
+                
+                <div id="messageArea"></div>
+
+                <div class="action-buttons">
+                    <div class="action-btn" onclick="selectAction('in')">
+                        <div class="icon">🏢</div>
+                        <div class="label">出勤</div>
+                    </div>
+                    <div class="action-btn" onclick="selectAction('out')">
+                        <div class="icon">🏠</div>
+                        <div class="label">退勤</div>
+                    </div>
+                </div>
+
+                <button id="punchBtn" class="btn btn-success" onclick="punch()" disabled>
+                    打刻する
+                </button>
+
+                <button class="btn btn-info" onclick="scanQR()">
+                    📷 QRコードを読み取る
+                </button>
+            </div>
+
+            <!-- 本日の記録 -->
+            <div class="card">
+                <h2 style="margin-bottom: 20px;">📋 本日の打刻記録</h2>
+                <div id="recordsArea">
+                    <p style="text-align: center; color: #999;">本日の記録はありません</p>
+                </div>
+            </div>
+
+            <!-- 設定 -->
+            <div class="card">
+                <button class="btn btn-primary" onclick="changeEmployeeCode()">
+                    ⚙️ 従業員コード変更
+                </button>
+                <button class="btn btn-danger" onclick="liffLogout()">
+                    ログアウト
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // 設定
+        // ========================================
+        const LIFF_ID = '2008444059-JmVGoO57';
+        const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyqpql1mobPxD_2qrnfSb7CobAKwjgjC-dD7ELLGNSBrOtw1LDpNJv7Ia3LekNtuv98/exec';
+        
+        // ========================================
+        // グローバル変数
+        // ========================================
+        let liffProfile = null;
+        let employeeCode = null;
+        let selectedAction = null;
+        let records = [];
+
+        // ========================================
+        // デバッグ関数
+        // ========================================
+        function debugLog(message, data = null) {
+            console.log(`[DEBUG] ${message}`, data || '');
+            document.getElementById('currentUrl').textContent = window.location.href;
+        }
+
+        function showError(message) {
+            debugLog('エラー発生', message);
+            document.getElementById('errorInfo').textContent = message;
+            document.getElementById('errorMessage').textContent = message;
+            hideAllScreens();
+            document.getElementById('errorScreen').style.display = 'block';
+        }
+
+        function showDebugInfo() {
+            const debugDiv = document.getElementById('debugInfo');
+            debugDiv.style.display = debugDiv.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // ========================================
+        // 初期化
+        // ========================================
+        window.onload = async function() {
+            debugLog('ページ読み込み完了');
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            try {
+                await initializeLiff();
+            } catch (error) {
+                showError('初期化に失敗しました: ' + error.message);
+            }
+        };
+
+        // LIFF初期化（修正版）
+        async function initializeLiff() {
+            debugLog('LIFF初期化開始');
+            document.getElementById('liffStatus').textContent = '初期化中...';
+            
+            try {
+                // LIFF初期化
+                await liff.init({ 
+                    liffId: LIFF_ID,
+                    withLoginOnExternalBrowser: true // 外部ブラウザでもログイン可能に
+                });
+                
+                debugLog('LIFF初期化成功');
+                document.getElementById('liffStatus').textContent = '初期化完了';
+                
+                // ログイン状態確認
+                const isLoggedIn = liff.isLoggedIn();
+                document.getElementById('loginStatus').textContent = isLoggedIn ? 'ログイン済み' : '未ログイン';
+                debugLog('ログイン状態', isLoggedIn);
+                
+                if (isLoggedIn) {
+                    try {
+                        // プロフィール取得
+                        const profile = await liff.getProfile();
+                        liffProfile = profile;
+                        debugLog('プロフィール取得成功', profile);
+                        
+                        // 従業員コード確認
+                        const storageKey = 'employeeCode_' + profile.userId;
+                        employeeCode = localStorage.getItem(storageKey);
+                        debugLog('従業員コード', employeeCode);
+                        
+                        if (employeeCode) {
+                            // メイン画面表示
+                            showMainScreen();
+                        } else {
+                            // 初期設定画面表示
+                            showSetupScreen();
+                        }
+                    } catch (profileError) {
+                        debugLog('プロフィール取得エラー', profileError);
+                        showError('プロフィールの取得に失敗しました');
+                    }
+                } else {
+                    // ログイン画面表示
+                    showLoginScreen();
+                }
+            } catch (initError) {
+                debugLog('LIFF初期化エラー', initError);
+                document.getElementById('liffStatus').textContent = 'エラー';
+                
+                // LIFFが使用できない環境の場合
+                if (initError.code === 'INVALID_CONFIG') {
+                    showError('LIFF IDが正しくありません');
+                } else if (!liff.isInClient()) {
+                    // LINE外部ブラウザの場合
+                    showLoginScreen();
+                } else {
+                    showError('LIFF初期化エラー: ' + initError.message);
+                }
+            }
+        }
+
+        // ========================================
+        // 画面制御
+        // ========================================
+        function hideAllScreens() {
+            document.getElementById('loadingScreen').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('setupScreen').style.display = 'none';
+            document.getElementById('mainScreen').style.display = 'none';
+            document.getElementById('errorScreen').style.display = 'none';
+        }
+
+        function showLoginScreen() {
+            debugLog('ログイン画面表示');
+            hideAllScreens();
+            document.getElementById('loginScreen').style.display = 'block';
+        }
+
+        function showSetupScreen() {
+            debugLog('初期設定画面表示');
+            hideAllScreens();
+            document.getElementById('setupScreen').style.display = 'block';
+            
+            if (liffProfile) {
+                document.getElementById('setupUserName').textContent = liffProfile.displayName;
+                document.getElementById('setupUserId').textContent = liffProfile.userId;
+            }
+        }
+
+        function showMainScreen() {
+            debugLog('メイン画面表示');
+            hideAllScreens();
+            document.getElementById('mainScreen').style.display = 'block';
+            
+            if (liffProfile) {
+                document.getElementById('userName').textContent = liffProfile.displayName;
+                document.getElementById('userCode').textContent = '従業員コード: ' + employeeCode;
+            }
+            
+            // ローカルストレージから記録読み込み
+            loadRecords();
+        }
+
+        // ========================================
+        // ユーザーアクション
+        // ========================================
+        function liffLogin() {
+            debugLog('ログイン開始');
+            liff.login();
+        }
+
+        function liffLogout() {
+            if (confirm('ログアウトしますか？')) {
+                debugLog('ログアウト');
+                liff.logout();
+                window.location.reload();
+            }
+        }
+
+        // 初期設定フォーム
+        document.getElementById('setupForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const code = document.getElementById('setupEmployeeCode').value.trim();
+            
+            if (code) {
+                employeeCode = code;
+                const storageKey = 'employeeCode_' + liffProfile.userId;
+                localStorage.setItem(storageKey, code);
+                debugLog('従業員コード保存', code);
+                
+                // Google Sheetsに送信
+                await sendToSheets('addEmployee', {
+                    code: employeeCode,
+                    name: liffProfile.displayName,
+                    lineId: liffProfile.userId
+                });
+                
+                showMainScreen();
+            }
+        });
+
+        // 従業員コード変更
+        function changeEmployeeCode() {
+            const newCode = prompt('新しい従業員コードを入力してください:', employeeCode);
+            if (newCode && newCode.trim()) {
+                employeeCode = newCode.trim();
+                const storageKey = 'employeeCode_' + liffProfile.userId;
+                localStorage.setItem(storageKey, employeeCode);
+                document.getElementById('userCode').textContent = '従業員コード: ' + employeeCode;
+                showMessage('従業員コードを更新しました', 'success');
+            }
+        }
+
+        // アクション選択
+        function selectAction(type) {
+            selectedAction = type;
+            document.querySelectorAll('.action-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+            document.getElementById('punchBtn').disabled = false;
+            document.getElementById('punchBtn').textContent = type === 'in' ? '出勤を記録' : '退勤を記録';
+        }
+
+        // 打刻
+        async function punch() {
+            if (!selectedAction) {
+                showMessage('打刻タイプを選択してください', 'error');
+                return;
+            }
+            
+            const record = {
+                employeeCode: employeeCode,
+                employeeName: liffProfile.displayName,
+                lineUserId: liffProfile.userId,
+                type: selectedAction,
+                date: new Date().toISOString().split('T')[0],
+                time: new Date().toLocaleTimeString('ja-JP'),
+                method: '手動',
+                timestamp: new Date().toISOString()
+            };
+            
+            records.push(record);
+            saveRecords();
+            
+            // Google Sheetsに送信
+            await sendToSheets('punch', record);
+            
+            const actionText = selectedAction === 'in' ? '出勤' : '退勤';
+            showMessage(`${actionText}を記録しました`, 'success');
+            
+            updateRecordsDisplay();
+            
+            // リセット
+            selectedAction = null;
+            document.querySelectorAll('.action-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById('punchBtn').disabled = true;
+            document.getElementById('punchBtn').textContent = '打刻する';
+        }
+
+        // QRスキャン
+        async function scanQR() {
+            try {
+                if (!liff.scanCodeV2) {
+                    showMessage('QRスキャン機能が利用できません', 'error');
+                    return;
+                }
+                const result = await liff.scanCodeV2();
+                debugLog('QRスキャン結果', result);
+                // QR処理
+            } catch (error) {
+                debugLog('QRスキャンエラー', error);
+                showMessage('QRスキャンに失敗しました', 'error');
+            }
+        }
+
+        // ========================================
+        // データ管理
+        // ========================================
+        function loadRecords() {
+            const saved = localStorage.getItem('attendance_records');
+            if (saved) {
+                records = JSON.parse(saved);
+            }
+            updateRecordsDisplay();
+        }
+
+        function saveRecords() {
+            localStorage.setItem('attendance_records', JSON.stringify(records));
+        }
+
+        function updateRecordsDisplay() {
+            const today = new Date().toISOString().split('T')[0];
+            const todayRecords = records.filter(r => r.date === today);
+            
+            const recordsArea = document.getElementById('recordsArea');
+            if (todayRecords.length === 0) {
+                recordsArea.innerHTML = '<p style="text-align: center; color: #999;">本日の記録はありません</p>';
+            } else {
+                const html = '<table><thead><tr><th>時刻</th><th>種類</th></tr></thead><tbody>' +
+                    todayRecords.map(r => `<tr><td>${r.time}</td><td>${r.type === 'in' ? '出勤' : '退勤'}</td></tr>`).join('') +
+                    '</tbody></table>';
+                recordsArea.innerHTML = html;
+            }
+        }
+
+        // Google Sheets送信
+        async function sendToSheets(action, data) {
+            try {
+                await fetch(GAS_API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({ action, ...data })
+                });
+                debugLog('Google Sheets送信完了', data);
+            } catch (error) {
+                debugLog('送信エラー', error);
+            }
+        }
+
+        // メッセージ表示
+        function showMessage(text, type = 'info') {
+            const messageArea = document.getElementById('messageArea');
+            if (messageArea) {
+                messageArea.innerHTML = `<div class="message ${type}">${text}</div>`;
+                setTimeout(() => { messageArea.innerHTML = ''; }, 3000);
+            }
+        }
+
+        // 時計更新
+        function updateClock() {
+            const now = new Date();
+            const clockElement = document.getElementById('clock');
+            const dateElement = document.getElementById('date');
+            
+            if (clockElement) {
+                clockElement.textContent = now.toLocaleTimeString('ja-JP');
+            }
+            if (dateElement) {
+                dateElement.textContent = now.toLocaleDateString('ja-JP', {
+                    year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
+                });
+            }
+        }
+    </script>
+</body>
+</html>
